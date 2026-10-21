@@ -18,12 +18,15 @@ unchanged.
 ### Added
 - **Arrangement `type: five_fret`** with the entry keys `five_fret` (path to the chart),
   `instrument` (`guitar` / `rhythm` / `bass`) and `pairs_with` (id of the counterpart
-  arrangement) ([§5.2](spec/feedpak-v1.md#52-arrangements)). Such an entry has no `file`, and
-  **MUST NOT** be selected or graded as a fretted arrangement.
+  arrangement) ([§5.2](spec/feedpak-v1.md#52-arrangements)). An entry is a five-fret part only
+  when `type` is `five_fret` (the `five_fret` key alone does not make it one). Such an entry has
+  no `file`, and **MUST NOT** be selected or graded as a fretted arrangement.
 - **`five_fret_<id>.json`** ([§7.10](spec/feedpak-v1.md#710-five_fret_idjson),
   `schemas/five-fret.schema.json`): notes `{t, f, l?, h?, tap?}` where `f` is a 5-bit fret mask
   (`0` = open), easier `levels` (`{notes, generated?}`), `star_power`, `solos`, and a required
-  `source.kind` (`chart` / `auto`) with optional provenance.
+  `source.kind` (`chart` / `auto`) with optional provenance. `h` is the note's final, resolved
+  HOPO state (natural HOPOs included; absent = strum); Readers MUST NOT apply automatic HOPO
+  rules.
 - `tools/validate.py` validates the `five_fret` pointer; the extended example gains a
   `five_fret_bass` part.
 

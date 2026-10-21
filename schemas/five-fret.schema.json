@@ -47,7 +47,7 @@
         "t": { "type": "number", "minimum": 0 },
         "f": { "type": "integer", "minimum": 0, "maximum": 31, "$comment": "Fret bitmask: bit0 green, bit1 red, bit2 yellow, bit3 blue, bit4 orange; 0 = open." },
         "l": { "type": "number", "exclusiveMinimum": 0 },
-        "h": { "type": "boolean" },
+        "h": { "type": "boolean", "$comment": "Final, resolved HOPO state (forced and natural HOPOs alike); absent = strum. Readers MUST NOT apply automatic HOPO rules." },
         "tap": { "type": "boolean" }
       }
     },

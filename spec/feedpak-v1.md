@@ -392,7 +392,7 @@ arrangements:
 | `type` | string | — | OPTIONAL instrument hint (`guitar`, `bass`, `piano`, `violin`, `drums`, …). The value `drums` marks a **drum part**: its chart is a `drum_tab` (below), never a fretted `file` or `notation`, and it **MUST NOT** be selected or graded as a pitched/fretted arrangement. The value `five_fret` (fork only, 1.21.0) marks a **five-fret part** — see `five_fret` below. |
 | `notation` | string (path) | — | OPTIONAL path to a standard-notation file for this arrangement (see [§7.6](#76-notation_idjson)). When present, `file` MAY be omitted and the arrangement is notation-only. |
 | `drum_tab` | string (path) | — | OPTIONAL path to a per-arrangement [drum-tab file](#75-drum_tabjson), the same file shape the song-level [`drum_tab`](#75-drum_tabjson) key points at. Its presence makes the entry a **drum part** (`type` SHOULD be `drums`); `file` and `notation` are then omitted. A pack MAY carry several drum-part arrangements (e.g. two drummers, or an aux-percussion layer) — see [§7.5](#75-drum_tabjson) for how they relate to the song-level `drum_tab`. |
-| `five_fret` | string (path) | — | OPTIONAL path to a [five-fret chart file](#710-five_fret_idjson) (fork only, 1.21.0). Its presence makes the entry a **five-fret part** (`type` SHOULD be `five_fret`); `file`, `notation`, and `drum_tab` are then omitted. A five-fret part **MUST NOT** be selected or graded as a fretted arrangement — its notes are fret-button masks, not string·fret positions. |
+| `five_fret` | string (path) | — | OPTIONAL path to a [five-fret chart file](#710-five_fret_idjson) (fork only, 1.21.0). An entry is a **five-fret part** only when its `type` is `five_fret`; a Writer **MUST** set `type: five_fret` on every entry carrying this key, and the key alone does not make an entry a five-fret part. On a five-fret part, `file`, `notation`, and `drum_tab` are omitted. A five-fret part **MUST NOT** be selected or graded as a fretted arrangement — its notes are fret-button masks, not string·fret positions. |
 | `instrument` | string | — | OPTIONAL (fork only, 1.21.0), meaningful on a five-fret part: which part it charts — `guitar`, `rhythm`, or `bass`. It matches the `instrument` in the part's [five-fret file](#710-five_fret_idjson). |
 | `pairs_with` | string | — | OPTIONAL (fork only, 1.21.0): the `id` of the arrangement this five-fret part is the plastic-controller counterpart of (e.g. a five-fret bass chart derived from the `bass` arrangement). A hint for pairing and display; a Reader **MUST** tolerate an id that matches no arrangement. |
 | `tones` | object | — | OPTIONAL sound binding for this arrangement — same shape as the arrangement JSON's [`tones`](#69-tones-optional) (§6.9): `base`, `base_rig`, `changes[]`, referencing rig ids in [`rigs.json`](#79-rigsjson). Available whether or not the arrangement has a `file` (notation-only and drum-part entries included). See the precedence rule below. |
@@ -1708,7 +1708,7 @@ pointer, never by scanning, [§2.2](#22-three-core-rules)):
 | `t` | number | Time in seconds, `>= 0`. |
 | `f` | integer | **Fret bitmask**, `0`–`31`: bit 0 green, bit 1 red, bit 2 yellow, bit 3 blue, bit 4 orange. Several bits set is a chord. `0` is an **open** note (no fret held). |
 | `l` | number | Sustain length in seconds, `> 0`; absent ⇒ no sustain. |
-| `h` | boolean | The note is a hammer-on/pull-off (HOPO). A Writer sets it only where the source forces or marks it; whether a note *is* a HOPO under a game's automatic rules is resolved by the Reader at import time. |
+| `h` | boolean | The note's **final, resolved** hammer-on/pull-off (HOPO) state: `true` for every HOPO, whether the source forced it or a game's automatic (natural-HOPO) rules made it one. A Writer resolves those rules when it writes the file. Absent ⇒ the note is strummed. Readers **MUST NOT** apply automatic HOPO rules on top. |
 | `tap` | boolean | The note is a tap note. |
 
 A Writer **SHOULD** emit `notes` sorted by `t`. Unknown keys MUST be ignored and preserved
@@ -1837,7 +1837,7 @@ A **conformant feedpak** (normative summary):
 - [ ] Every side-file validates against its schema and carries a `version` where this document
       requires one.
 - [ ] Times are seconds; hot-path field names are unexpanded.
-- [ ] A `type: five_fret` arrangement (fork only, 1.21.0) points at its chart with `five_fret`, carries no
+- [ ] Every entry with a `five_fret` pointer has `type: five_fret` (fork only, 1.21.0), carries no
       `file`, and is never graded as fretted; its file validates against `five-fret.schema.json`.
 
 A **conformant Reader**:
