@@ -297,6 +297,96 @@ def test_drum_gameplay_metadata_rejects_malformed(tmp_path, patch, needle):
 
 
 # --------------------------------------------------------------------------- #
+# Five-fret parts (1.21.0, fork only)
+# --------------------------------------------------------------------------- #
+def _five_fret_pack(tmp_path, five_fret: dict):
+    m = _base_manifest()
+    m["arrangements"].append({
+        "id": "five_fret_bass", "name": "Bass (5-fret)", "type": "five_fret",
+        "instrument": "bass", "five_fret": "five_fret_bass.json",
+    })
+    return _make_pack(tmp_path / "ff.feedpak", m,
+                      extra={"five_fret_bass.json": json.dumps(five_fret)})
+
+
+_FIVE_FRET = {
+    "version": 1,
+    "name": "Bass (5-fret)",
+    "instrument": "bass",
+    "source": {"kind": "chart", "origin": "chorus", "charter": "someone"},
+    "notes": [
+        {"t": 1.0, "f": 1},
+        {"t": 1.5, "f": 0, "l": 0.25},
+        {"t": 2.0, "f": 6, "h": True, "tap": True},
+    ],
+    "levels": {"easy": {"notes": [{"t": 1.0, "f": 1}], "generated": True}},
+    "star_power": [{"start_time": 1.0, "end_time": 2.0}],
+    "solos": [{"start_time": 1.0, "end_time": 2.0}],
+}
+
+
+def test_five_fret_example_validates(tmp_path):
+    import shutil
+    import subprocess
+
+    ex = ROOT / "examples" / "extended.feedpak"
+    run = subprocess.run([sys.executable, str(ROOT / "tools" / "validate.py"), str(ex)],
+                         capture_output=True, text=True)
+    assert run.returncode == 0, run.stdout + run.stderr
+    # the side file is really checked: corrupting a copy makes it fail, naming the file
+    cp = tmp_path / "extended.feedpak"
+    shutil.copytree(ex, cp)
+    target = cp / "five_fret_bass.json"
+    data = json.loads(target.read_text())
+    data["notes"][0]["f"] = 32
+    target.write_text(json.dumps(data))
+    rep = validate.resolve_and_validate(cp)
+    assert any("five_fret_bass.json" in e for e in rep.errors), rep.errors
+
+
+def test_five_fret_pack_passes(tmp_path):
+    rep = validate.resolve_and_validate(_five_fret_pack(tmp_path, _FIVE_FRET))
+    assert rep.ok, rep.errors
+
+
+def test_five_fret_rejects_bad_fret_mask(tmp_path):
+    bad = dict(_FIVE_FRET, notes=[{"t": 1, "f": 32}])
+    rep = validate.resolve_and_validate(_five_fret_pack(tmp_path, bad))
+    assert not rep.ok
+    assert any("five_fret_bass.json" in e and "notes/0/f" in e for e in rep.errors), rep.errors
+
+
+def test_five_fret_requires_source_kind(tmp_path):
+    bad = dict(_FIVE_FRET, source={"origin": "chorus"})
+    rep = validate.resolve_and_validate(_five_fret_pack(tmp_path, bad))
+    assert not rep.ok
+    assert any("kind" in e for e in rep.errors), rep.errors
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"notes": [{"t": -1, "f": 1}]},                     # negative time
+        {"notes": [{"t": 1, "f": 1, "l": 0}]},              # sustain must be > 0
+        {"notes": [{"t": 1, "f": 1, "h": 1}]},              # not a boolean
+        {"version": 2},                                     # const 1
+        {"levels": {"easy": {"generated": True}}},          # level without notes
+    ],
+)
+def test_five_fret_rejects_malformed(tmp_path, patch):
+    rep = validate.resolve_and_validate(_five_fret_pack(tmp_path, dict(_FIVE_FRET, **patch)))
+    assert not rep.ok
+
+
+def test_five_fret_entry_needs_no_file(tmp_path):
+    # a `five_fret` pointer alone satisfies the arrangement-entry anyOf (like drum_tab)
+    m = _base_manifest()
+    m["arrangements"].append({"id": "x", "type": "five_fret", "five_fret": "x.json"})
+    pack = _make_pack(tmp_path / "ok.feedpak", m, extra={"x.json": json.dumps(_FIVE_FRET)})
+    assert validate.resolve_and_validate(pack).ok
+
+
+# --------------------------------------------------------------------------- #
 # .jsonc support
 # --------------------------------------------------------------------------- #
 def test_jsonc_arrangement_passes(tmp_path):

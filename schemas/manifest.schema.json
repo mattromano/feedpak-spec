@@ -119,12 +119,16 @@
         "type": { "type": "string" },
         "notation": { "$ref": "#/$defs/relpath" },
         "drum_tab": { "$ref": "#/$defs/relpath" },
+        "five_fret": { "$ref": "#/$defs/relpath", "$comment": "Five-fret guitar/bass chart (fork-only 1.21.0); spec 5.2 / 7.10." },
+        "instrument": { "enum": ["guitar", "rhythm", "bass"], "$comment": "Which five-fret part a type: five_fret entry is (fork-only 1.21.0)." },
+        "pairs_with": { "type": "string", "minLength": 1, "$comment": "Id of the arrangement this five-fret part is the plastic-controller counterpart of (fork-only 1.21.0)." },
         "tones": { "type": "object", "$comment": "Sound binding; same shape as arrangement-JSON tones (spec 6.9). Overrides the in-JSON tones wholesale - precedence in spec 5.2." }
       },
       "anyOf": [
         { "required": ["file"] },
         { "required": ["notation"] },
-        { "required": ["drum_tab"] }
+        { "required": ["drum_tab"] },
+        { "required": ["five_fret"] }
       ]
     },
     "stemEntry": {
