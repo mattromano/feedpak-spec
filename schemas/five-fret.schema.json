@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://got-feedback.github.io/feedpak-spec/schemas/five-fret.schema.json",
+  "$comment": "SPDX-License-Identifier: MIT. feedpak five_fret_<id>.json (Rock Band / Clone Hero style 5-fret guitar/bass chart). Fork-only addition (1.21.0). See spec/feedpak-v1.md §7.10.",
+  "title": "feedpak five-fret chart",
+  "type": "object",
+  "required": ["version", "source", "notes"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "const": 1 },
+    "name": { "type": "string" },
+    "instrument": { "enum": ["guitar", "rhythm", "bass"] },
+    "source": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": true,
+      "properties": {
+        "kind": { "enum": ["chart", "auto"] },
+        "origin": { "enum": ["chorus", "local", "rb"] },
+        "md5": { "type": "string" },
+        "charter": { "type": "string" },
+        "generator": { "type": "string" },
+        "generator_version": { "type": "string" },
+        "from_arrangement": { "type": "string" }
+      }
+    },
+    "notes": { "type": "array", "items": { "$ref": "#/$defs/note" } },
+    "levels": {
+      "type": "object",
+      "$comment": "Easier difficulties. Closed id list easy/medium/hard; a Reader ignores any other id.",
+      "additionalProperties": true,
+      "properties": {
+        "easy": { "$ref": "#/$defs/level" },
+        "medium": { "$ref": "#/$defs/level" },
+        "hard": { "$ref": "#/$defs/level" }
+      }
+    },
+    "star_power": { "$ref": "#/$defs/ranges" },
+    "solos": { "$ref": "#/$defs/ranges" }
+  },
+  "$defs": {
+    "note": {
+      "type": "object",
+      "required": ["t", "f"],
+      "additionalProperties": true,
+      "properties": {
+        "t": { "type": "number", "minimum": 0 },
+        "f": { "type": "integer", "minimum": 0, "maximum": 31, "$comment": "Fret bitmask: bit0 green, bit1 red, bit2 yellow, bit3 blue, bit4 orange; 0 = open." },
+        "l": { "type": "number", "exclusiveMinimum": 0 },
+        "h": { "type": "boolean", "$comment": "Final, resolved HOPO state (forced and natural HOPOs alike); absent = strum. Readers MUST NOT apply automatic HOPO rules." },
+        "tap": { "type": "boolean" }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": ["start_time", "end_time"],
+      "additionalProperties": true,
+      "properties": {
+        "start_time": { "type": "number" },
+        "end_time": { "type": "number" }
+      }
+    },
+    "ranges": { "type": "array", "items": { "$ref": "#/$defs/range" } },
+    "level": {
+      "type": "object",
+      "required": ["notes"],
+      "additionalProperties": true,
+      "properties": {
+        "notes": { "type": "array", "items": { "$ref": "#/$defs/note" } },
+        "generated": { "type": "boolean" }
+      }
+    }
+  }
+}

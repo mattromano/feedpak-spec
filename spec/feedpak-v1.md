@@ -7,10 +7,10 @@ The JSON Schemas, examples, and reference code that accompany it are MIT-license
 
 # feedpak Format Specification
 
-- **Specification version:** 1.20.0
+- **Specification version:** 1.21.0
 - **Format major version:** 1
 - **Status:** Draft
-- **Date:** 2026-10-09
+- **Date:** 2026-10-20
 - **Editors:** The feedpak authors
 - **License:** [CC0 1.0 Universal](../LICENSE) (this document)
 - **Machine-readable schemas:** [`schemas/`](../schemas/) (MIT)
@@ -147,11 +147,11 @@ The manifest **SHOULD** carry a top-level `feedpak_version` key whose value is a
 which version of *this format* the package conforms to.
 
 ```yaml
-feedpak_version: "1.20.0"
+feedpak_version: "1.21.0"
 ```
 
 - A Writer producing a feedpak that conforms to this document **SHOULD** set
-  `feedpak_version: "1.20.0"`. (The optional fields added since 1.0.0 —
+  `feedpak_version: "1.21.0"`. (The optional fields added since 1.0.0 —
   [`authors`](#54-authors) in 1.1.0; the song-level [`tempos`](#74-song_timelinejson) /
   [`time_signatures`](#74-song_timelinejson) plus the per-arrangement
   [`tempos`](#610-per-arrangement-tempo-optional) override in 1.2.0; the per-note bend shape
@@ -206,7 +206,10 @@ feedpak_version: "1.20.0"
   [drum gameplay metadata](#drum-gameplay-metadata) to the `drum_tab` file — the per-hit
   [`a`](#75-drum_tabjson) (accent) and [`x2`](#75-drum_tabjson) (double-kick) flags and the
   top-level `star_power`, `fills`, `solos`, and `levels` — all additive, an older Reader
-  ignores them and plays the full `hits[]` chart as before.)
+  ignores them and plays the full `hits[]` chart as before. 1.21.0 (**fork only, not upstream**)
+  adds **five-fret parts** — the arrangement `type` value [`five_fret`](#52-arrangements), its
+  `five_fret` / `instrument` / `pairs_with` entry keys, and the [`five_fret_<id>.json`](#710-five_fret_idjson)
+  side file — additive, an older Reader skips the entry.)
 - If `feedpak_version` is **absent**, a Reader **MUST** treat the package as `"1.0.0"`. (This
   makes every package authored before the field existed a valid 1.0.0 package.)
 - The value **MUST** be a valid semver string when present. A Reader **MUST** reject a value
@@ -382,13 +385,16 @@ arrangements:
 |---|---|---|---|
 | `id` | string | — | **REQUIRED.** Stable, filesystem-safe, lowercase identifier; used in filenames and referenced by consumers. |
 | `name` | string | `id` | Display name. |
-| `file` | string (path) | — | Path to the arrangement JSON (see [§6](#6-arrangement-json)). MAY be omitted only when `notation` or `drum_tab` is present (see below). |
+| `file` | string (path) | — | Path to the arrangement JSON (see [§6](#6-arrangement-json)). MAY be omitted only when `notation`, `drum_tab`, or `five_fret` is present (see below). |
 | `tuning` | int[] | `[0,0,0,0,0,0]` | Semitone offsets from standard `E2 A2 D2 G3 B3 E4`. Six elements is the standard 6-string-guitar convention; lengths **4–8** are accepted (4–6 = bass, 6–8 = extended-range guitar; length 6 is shared). Readers **MUST NOT** hard-code length 6. |
 | `capo` | int | `0` | Capo fret. |
 | `centOffset` | number | `0.0` | Pitch-shift in cents. Common values: `-1200.0` (one octave down for extended-range bass), small non-zero values for non-A440 reference pitch (e.g. A443 ≈ `+11.8`). |
-| `type` | string | — | OPTIONAL instrument hint (`guitar`, `bass`, `piano`, `violin`, `drums`, …). The value `drums` marks a **drum part**: its chart is a `drum_tab` (below), never a fretted `file` or `notation`, and it **MUST NOT** be selected or graded as a pitched/fretted arrangement. |
+| `type` | string | — | OPTIONAL instrument hint (`guitar`, `bass`, `piano`, `violin`, `drums`, …). The value `drums` marks a **drum part**: its chart is a `drum_tab` (below), never a fretted `file` or `notation`, and it **MUST NOT** be selected or graded as a pitched/fretted arrangement. The value `five_fret` (fork only, 1.21.0) marks a **five-fret part** — see `five_fret` below. |
 | `notation` | string (path) | — | OPTIONAL path to a standard-notation file for this arrangement (see [§7.6](#76-notation_idjson)). When present, `file` MAY be omitted and the arrangement is notation-only. |
 | `drum_tab` | string (path) | — | OPTIONAL path to a per-arrangement [drum-tab file](#75-drum_tabjson), the same file shape the song-level [`drum_tab`](#75-drum_tabjson) key points at. Its presence makes the entry a **drum part** (`type` SHOULD be `drums`); `file` and `notation` are then omitted. A pack MAY carry several drum-part arrangements (e.g. two drummers, or an aux-percussion layer) — see [§7.5](#75-drum_tabjson) for how they relate to the song-level `drum_tab`. |
+| `five_fret` | string (path) | — | OPTIONAL path to a [five-fret chart file](#710-five_fret_idjson) (fork only, 1.21.0). An entry is a **five-fret part** only when its `type` is `five_fret`; a Writer **MUST** set `type: five_fret` on every entry carrying this key, and the key alone does not make an entry a five-fret part. On a five-fret part, `file`, `notation`, and `drum_tab` are omitted. A five-fret part **MUST NOT** be selected or graded as a fretted arrangement — its notes are fret-button masks, not string·fret positions. |
+| `instrument` | string | — | OPTIONAL (fork only, 1.21.0), meaningful on a five-fret part: which part it charts — `guitar`, `rhythm`, or `bass`. It matches the `instrument` in the part's [five-fret file](#710-five_fret_idjson). |
+| `pairs_with` | string | — | OPTIONAL (fork only, 1.21.0): the `id` of the arrangement this five-fret part is the plastic-controller counterpart of (e.g. a five-fret bass chart derived from the `bass` arrangement). A hint for pairing and display; a Reader **MUST** tolerate an id that matches no arrangement. |
 | `tones` | object | — | OPTIONAL sound binding for this arrangement — same shape as the arrangement JSON's [`tones`](#69-tones-optional) (§6.9): `base`, `base_rig`, `changes[]`, referencing rig ids in [`rigs.json`](#79-rigsjson). Available whether or not the arrangement has a `file` (notation-only and drum-part entries included). See the precedence rule below. |
 
 Manifest-level `tuning`, `capo`, and `centOffset` **override** any equivalents embedded inside
@@ -1625,6 +1631,102 @@ renderable everywhere.
 - A Reader that does not interpret rigs **MUST** ignore `rigs.json` and preserve it verbatim on
   round-trip, along with any unknown `role`/`engine`/`kind` values and `ext` namespaces.
 
+### 7.10. `five_fret_<id>.json`
+
+> **Fork only, not upstream (1.21.0).** This section is written as a Feedpak Enhancement Proposal
+> (FEP) so it can be proposed upstream unchanged.
+
+#### Summary
+
+A five-fret part carries a **Rock Band / Clone Hero / YARG style guitar or bass chart**: notes
+are presses of up to five coloured fret buttons (green, red, yellow, blue, orange), not
+string·fret positions. It is a first-class arrangement type beside fretted tab, notation, and
+[drum tabs](#75-drum_tabjson).
+
+#### Motivation
+
+Plastic-controller games chart guitar and bass as button masks with sustains, hammer-on/pull-off
+(HOPO) and tap flags, star-power phrases, solos, and several difficulties. The fretted
+[arrangement JSON](#6-arrangement-json) cannot express a chord of coloured buttons (it has no
+notion of a fret *color*, and grading it as string·fret would be meaningless), and a Writer that
+imported such a chart had to drop most of it or hide it in extension keys no other Reader
+understands.
+
+#### On-disk shape
+
+An [arrangement entry](#52-arrangements) with `type: five_fret`, an `instrument`, and a
+`five_fret` pointer (no `file`, no `notation`, no `drum_tab`), optionally `pairs_with`:
+
+```yaml
+- id: five_fret_bass
+  name: Bass (5-fret)
+  type: five_fret
+  instrument: bass            # guitar | rhythm | bass
+  five_fret: five_fret_bass.json
+  pairs_with: bass            # OPTIONAL: id of the counterpart arrangement
+```
+
+The `five_fret_<id>.json` file (the filename is the Writer's choice — resolve through the manifest
+pointer, never by scanning, [§2.2](#22-three-core-rules)):
+
+```json
+{
+  "version": 1,
+  "name": "Bass (5-fret)",
+  "instrument": "bass",
+  "source": {"kind": "chart", "origin": "chorus", "md5": "0123abcd", "charter": "someone"},
+  "notes": [
+    {"t": 0.500, "f": 1},
+    {"t": 1.000, "f": 2, "l": 0.25},
+    {"t": 1.750, "f": 6, "h": true},
+    {"t": 2.000, "f": 0},
+    {"t": 2.500, "f": 12, "tap": true}
+  ],
+  "levels": {
+    "easy": {"notes": [{"t": 0.500, "f": 1}], "generated": true}
+  },
+  "star_power": [{"start_time": 0.500, "end_time": 2.000}],
+  "solos": [{"start_time": 2.500, "end_time": 3.500}]
+}
+```
+
+| Key | Type | Notes |
+|---|---|---|
+| `version` | integer | **REQUIRED.** Always `1`. |
+| `name` | string | Display name. |
+| `instrument` | string | `guitar`, `rhythm`, or `bass`. |
+| `source` | object | **REQUIRED**, with a required `kind`: `chart` (authored by a charter) or `auto` (generated by software, e.g. reduced from a fretted arrangement). OPTIONAL provenance: `origin` (`chorus`, `local`, `rb`), `md5`, `charter`, `generator`, `generator_version`, `from_arrangement`. |
+| `notes` | array | **REQUIRED.** The part's **hardest** (Expert) chart; see Notes below. |
+| `levels` | object | Easier difficulties keyed `easy` / `medium` / `hard`, each `{"notes": [...], "generated": boolean}` with `notes` in exactly the top-level shape. `generated: true` marks a level reduced by software rather than charted by hand (absent ⇒ authored), the same flag [`drum_tab`](#drum-gameplay-metadata) levels use. The ids are a closed list for v1; a Reader **MUST** ignore an id it does not recognise. |
+| `star_power` | array of ranges | Star-power phrases: `{"start_time", "end_time"}` in seconds, the pair [`drum_tab`](#drum-gameplay-metadata) uses. |
+| `solos` | array of ranges | Solo sections, same range shape. |
+
+**Notes.** Each note is `{"t": seconds, "f": mask, "l"?: seconds, "h"?: true, "tap"?: true}`:
+
+| Field | Type | Notes |
+|---|---|---|
+| `t` | number | Time in seconds, `>= 0`. |
+| `f` | integer | **Fret bitmask**, `0`–`31`: bit 0 green, bit 1 red, bit 2 yellow, bit 3 blue, bit 4 orange. Several bits set is a chord. `0` is an **open** note (no fret held). |
+| `l` | number | Sustain length in seconds, `> 0`; absent ⇒ no sustain. |
+| `h` | boolean | The note's **final, resolved** hammer-on/pull-off (HOPO) state: `true` for every HOPO, whether the source forced it or a game's automatic (natural-HOPO) rules made it one. A Writer resolves those rules when it writes the file. Absent ⇒ the note is strummed. Readers **MUST NOT** apply automatic HOPO rules on top. |
+| `tap` | boolean | The note is a tap note. |
+
+A Writer **SHOULD** emit `notes` sorted by `t`. Unknown keys MUST be ignored and preserved
+([§2.2](#22-three-core-rules)).
+
+#### Backward compatibility
+
+Purely additive. An older Reader that does not know `type: five_fret` sees an arrangement entry
+with no `file`, `notation`, or `drum_tab` it can render and skips it, so the song plays as before
+with the five-fret part absent. A *strict* older Reader MAY instead reject a `file`-less entry
+that is not `type: drums`; a Writer that must reach such a Reader should offer the part only to
+Readers known to understand it. Packs without five-fret parts are unchanged.
+
+#### Version impact
+
+MINOR bump (1.21.0): new optional arrangement `type` value, three optional entry keys
+(`five_fret`, `instrument`, `pairs_with`), and a new side file. No existing key changes meaning.
+
 ---
 
 ## 8. Reading and writing
@@ -1735,6 +1837,8 @@ A **conformant feedpak** (normative summary):
 - [ ] Every side-file validates against its schema and carries a `version` where this document
       requires one.
 - [ ] Times are seconds; hot-path field names are unexpanded.
+- [ ] Every entry with a `five_fret` pointer has `type: five_fret` (fork only, 1.21.0), carries no
+      `file`, and is never graded as fretted; its file validates against `five-fret.schema.json`.
 
 A **conformant Reader**:
 

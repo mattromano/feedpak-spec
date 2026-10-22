@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "name": "Bass (5-fret)",
+  "instrument": "bass",
+  "source": {
+    "kind": "auto",
+    "generator": "example-bass-reducer",
+    "generator_version": "1.0.0",
+    "from_arrangement": "bass"
+  },
+  "notes": [
+    { "t": 0.5, "f": 1 },
+    { "t": 1.0, "f": 2, "l": 0.25 },
+    { "t": 1.5, "f": 4 },
+    { "t": 1.75, "f": 6, "h": true },
+    { "t": 2.0, "f": 0 },
+    { "t": 2.5, "f": 12, "tap": true },
+    { "t": 3.0, "f": 31, "l": 0.5 }
+  ],
+  "levels": {
+    "easy": {
+      "notes": [
+        { "t": 0.5, "f": 1 },
+        { "t": 1.5, "f": 4 },
+        { "t": 3.0, "f": 1, "l": 0.5 }
+      ],
+      "generated": true
+    }
+  },
+  "star_power": [{ "start_time": 0.5, "end_time": 2.0 }],
+  "solos": [{ "start_time": 2.5, "end_time": 3.5 }]
+}

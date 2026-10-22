@@ -66,6 +66,8 @@ SIDE_FILE_SCHEMAS = {
     "harmony": "harmony.schema.json",
     "rigs": "rigs.schema.json",
 }
+# per-arrangement-entry pointer key -> schema (a `type: five_fret` part, 1.21.0 fork-only).
+ARRANGEMENT_SIDE_FILE_SCHEMAS = {"five_fret": "five-fret.schema.json"}
 NON_JSON_POINTERS = ("cover", "preview")
 
 # Regex to match JSON string literals (preserved) and C-style comments (stripped).
@@ -211,7 +213,7 @@ def validate_dir(root: Path, rep: Report) -> None:
                 "this validator may not understand it"
             )
 
-    # 3. arrangements: each entry's file + optional notation + optional drum_tab
+    # 3. arrangements: each entry's file + optional notation + optional drum_tab / five_fret
     arr_validator = load_schema("arrangement.schema.json")
     notation_validator = load_schema("notation.schema.json")
     drum_tab_validator = load_schema(SIDE_FILE_SCHEMAS["drum_tab"])
@@ -227,6 +229,10 @@ def validate_dir(root: Path, rep: Report) -> None:
         d = arr.get("drum_tab")
         if d is not None and check_pointer_exists(root, d, f"arrangements[{i}].drum_tab", rep):
             validate_json_file(root, d, drum_tab_validator, rep)
+        for key, schema_name in ARRANGEMENT_SIDE_FILE_SCHEMAS.items():
+            ptr = arr.get(key)
+            if ptr is not None and check_pointer_exists(root, ptr, f"arrangements[{i}].{key}", rep):
+                validate_json_file(root, ptr, load_schema(schema_name), rep)
 
     # 4. stems: each file must exist
     for i, st in enumerate(manifest.get("stems", []) or []):

@@ -26,6 +26,7 @@ JSON Schema (Draft 2020-12). These are the hosted, resolvable counterparts of ea
 - [song-timeline.schema.json](schemas/song-timeline.schema.json)
 - [notation.schema.json](schemas/notation.schema.json)
 - [drum-tab.schema.json](schemas/drum-tab.schema.json)
+- [five-fret.schema.json](schemas/five-fret.schema.json)
 - [keys.schema.json](schemas/keys.schema.json)
 - [lyrics.schema.json](schemas/lyrics.schema.json)
 - [vocal-pitch.schema.json](schemas/vocal-pitch.schema.json)

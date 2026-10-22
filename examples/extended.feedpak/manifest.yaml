@@ -1,9 +1,10 @@
 # Extended feedpak exercising optional side-files: lyrics, vocal pitch,
 # song timeline, and drum tabs (incl. multiple drum-part arrangements and
-# drum gameplay metadata — levels, star power, fills, solos — in drum_tab.json).
+# drum gameplay metadata — levels, star power, fills, solos — in drum_tab.json),
+# and a five-fret (Rock Band / Clone Hero style) bass part.
 # See spec/feedpak-v1.md §5 and §7.
 # SPDX-License-Identifier: MIT
-feedpak_version: "1.20.0"
+feedpak_version: "1.21.0"
 title: "Extended Demo"
 artist: "Example Artist"
 album: "Spec Examples"
@@ -62,6 +63,16 @@ arrangements:
     name: Drums (Live)
     type: drums
     drum_tab: drum_tab_live.json
+  # A five-fret plastic-controller part (fork-only, §5.2 / §7.10). Like a drum
+  # part it has neither `file` nor `notation` — its chart is the `five_fret`
+  # pointer — and it MUST NOT be graded as a fretted arrangement. `pairs_with`
+  # names the fretted arrangement it is the counterpart of.
+  - id: five_fret_bass
+    name: Bass (5-fret)
+    type: five_fret
+    instrument: bass
+    five_fret: five_fret_bass.json
+    pairs_with: bass
 stems:
   # A separated pack: the RESERVED `full` mixdown is RETAINED alongside the
   # per-instrument stems it was split into (§5.3). It is not an instrument

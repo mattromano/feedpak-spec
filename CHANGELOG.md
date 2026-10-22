@@ -8,6 +8,32 @@ and the specification is versioned per [Semantic Versioning](https://semver.org/
 [spec §4](spec/feedpak-v1.md#4-versioning) for how format, side-file, and document versions
 relate.
 
+## [1.21.0] - 2026-10-20 (fork only, not upstream)
+
+Additive (MINOR) release: **five-fret parts** — Rock Band / Clone Hero / YARG style guitar, rhythm
+and bass charts as a first-class arrangement type. This release exists only in the
+`mattromano/feedpak-spec` fork; the spec text is FEP-shaped so it can be proposed upstream
+unchanged.
+
+### Added
+- **Arrangement `type: five_fret`** with the entry keys `five_fret` (path to the chart),
+  `instrument` (`guitar` / `rhythm` / `bass`) and `pairs_with` (id of the counterpart
+  arrangement) ([§5.2](spec/feedpak-v1.md#52-arrangements)). An entry is a five-fret part only
+  when `type` is `five_fret` (the `five_fret` key alone does not make it one). Such an entry has
+  no `file`, and **MUST NOT** be selected or graded as a fretted arrangement.
+- **`five_fret_<id>.json`** ([§7.10](spec/feedpak-v1.md#710-five_fret_idjson),
+  `schemas/five-fret.schema.json`): notes `{t, f, l?, h?, tap?}` where `f` is a 5-bit fret mask
+  (`0` = open), easier `levels` (`{notes, generated?}`), `star_power`, `solos`, and a required
+  `source.kind` (`chart` / `auto`) with optional provenance. `h` is the note's final, resolved
+  HOPO state (natural HOPOs included; absent = strum); Readers MUST NOT apply automatic HOPO
+  rules.
+- `tools/validate.py` validates the `five_fret` pointer; the extended example gains a
+  `five_fret_bass` part.
+
+### Compatibility
+Older Readers skip the `file`-less entry; a strict older Reader may reject a `file`-less entry
+that is not `type: drums`.
+
 ## [1.20.0] - 2026-10-09
 
 Additive (MINOR) release: **drum gameplay metadata** — a `drum_tab` file can now carry what a
